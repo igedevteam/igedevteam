@@ -1,0 +1,50 @@
+on: [push]
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: azure/docker-login@v1
+      with:
+        login-server: smartcity2021.azurecr.io
+        username: ${{ secrets.acr_smartcity2021_username }}
+        password: ${{ secrets.acr_smartcity2021_password }}
+    
+    - name: Build and push image to ACR
+      id: build-image
+      run: |
+        docker build "$GITHUB_WORKSPACE/analytics/common/VCAC-A/gst" -f  "analytics/common/VCAC-A/gst/Dockerfile" -t smartcity2021.azurecr.io/smartsensors:${{ github.sha }}
+        docker push smartcity2021.azurecr.io/smartsensors:${{ github.sha }}
+    
+    - uses: azure/k8s-set-context@v1
+      with:
+         kubeconfig: ${{ secrets.aks_smartsensors_kubeConfig }}
+      id: login
+    
+    - name: Create namespace
+      run: |
+        namespacePresent=`kubectl get namespace | grep smartsensorsb6bd | wc -l`
+        if [ $namespacePresent -eq 0 ]
+        then
+            echo `kubectl create namespace smartsensorsb6bd`
+        fi
+
+    - uses: azure/k8s-create-secret@v1
+      with:
+        namespace: smartsensorsb6bd
+        container-registry-url: smartcity2021.azurecr.io
+        container-registry-username: ${{ secrets.acr_smartcity2021_username }}
+        container-registry-password: ${{ secrets.acr_smartcity2021_password }}
+        secret-name: smartsensorsdockerauth
+       
+    - uses: azure/k8s-deploy@v1.2
+      with:
+        namespace: smartsensorsb6bd
+        manifests: |
+          manifests/deployment.yml
+          manifests/service.yml
+        images: |
+          smartcity2021.azurecr.io/smartsensors:${{ github.sha }}
+        imagepullsecrets: |
+          smartsensorsdockerauth

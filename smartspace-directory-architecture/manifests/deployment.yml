@@ -1,0 +1,19 @@
+apiVersion : apps/v1
+kind: Deployment
+metadata:
+  name: "smartsensors-ad33"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "smartsensors-ad33"
+  template:
+    metadata:
+      labels:
+        app: "smartsensors-ad33"
+    spec:
+      containers:
+        - name: "smartsensors-ad33"
+          image: "smartcity2021.azurecr.io/smartsensors"
+          ports:
+          - containerPort: 80

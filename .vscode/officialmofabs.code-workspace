@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "officialmofabs"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../source/~officialmorepo.git"
+		}
+	],
+	"settings": {
+		"iis.activeFolder": "officialmofabs",
+		"workbench.colorCustomizations": {}
+	}
+}
